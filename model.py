@@ -6,6 +6,7 @@ from tensorflow.contrib import slim
 tf.app.flags.DEFINE_integer('text_scale', 512, '')
 
 from nets import resnet_v1
+import mobilenet_v1 as mobilenet
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -30,14 +31,23 @@ def mean_image_subtraction(images, means=[123.68, 116.78, 103.94]):
     return tf.concat(axis=3, values=channels)
 
 
-def model(images, weight_decay=1e-5, is_training=True):
+def model(images, weight_decay=1e-5, is_training=True, reuse=False):
     '''
     define the model, we use slim's implemention of resnet
     '''
     images = mean_image_subtraction(images)
 
-    with slim.arg_scope(resnet_v1.resnet_arg_scope(weight_decay=weight_decay)):
-        logits, end_points = resnet_v1.resnet_v1_50(images, is_training=is_training, scope='resnet_v1_50')
+    #with slim.arg_scope(resnet_v1.resnet_arg_scope(weight_decay=weight_decay)):
+    #    logits, end_points = resnet_v1.resnet_v1_50(images, is_training=is_training, scope='resnet_v1_50')
+
+
+    with slim.arg_scope(mobilenet.mobilenet_v1_arg_scope(
+                is_training=is_training, 
+                weight_decay=weight_decay,
+                regularize_depthwise=True if weight_decay > 0 else False)):
+        logits, end_points = mobilenet.mobilenet_v1(images, 
+                            num_classes=None, is_training=is_training, is_finetuning=is_training,
+                            final_endpoint='Conv2d_12_pointwise', reuse=reuse)
 
     with tf.variable_scope('feature_fusion', values=[end_points.values]):
         batch_norm_params = {
@@ -51,8 +61,10 @@ def model(images, weight_decay=1e-5, is_training=True):
                             normalizer_fn=slim.batch_norm,
                             normalizer_params=batch_norm_params,
                             weights_regularizer=slim.l2_regularizer(weight_decay)):
-            f = [end_points['pool5'], end_points['pool4'],
-                 end_points['pool3'], end_points['pool2']]
+            # f = [end_points['pool5'], end_points['pool4'],
+            #      end_points['pool3'], end_points['pool2']]
+            f = [end_points['Conv2d_12_pointwise'], end_points['Conv2d_6_pointwise'],
+                 end_points['Conv2d_4_pointwise'], end_points['Conv2d_2_pointwise']]                 
             for i in range(4):
                 print('Shape of f_{} {}'.format(i, f[i].shape))
             g = [None, None, None, None]

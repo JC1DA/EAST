@@ -10,7 +10,7 @@ tf.app.flags.DEFINE_float('learning_rate', 0.0001, '')
 tf.app.flags.DEFINE_integer('max_steps', 100000, '')
 tf.app.flags.DEFINE_float('moving_average_decay', 0.997, '')
 tf.app.flags.DEFINE_string('gpu_list', '1', '')
-tf.app.flags.DEFINE_string('checkpoint_path', '/tmp/east_resnet_v1_50_rbox/', '')
+tf.app.flags.DEFINE_string('checkpoint_path', '/tmp/east_resnet_v1_50_rbox/', 'make sure to empty this folder when training from scratch')
 tf.app.flags.DEFINE_boolean('restore', False, 'whether to resotre from checkpoint')
 tf.app.flags.DEFINE_integer('save_checkpoint_steps', 1000, '')
 tf.app.flags.DEFINE_integer('save_summary_steps', 100, '')
@@ -27,7 +27,7 @@ gpus = list(range(len(FLAGS.gpu_list.split(','))))
 def tower_loss(images, score_maps, geo_maps, training_masks, reuse_variables=None):
     # Build inference graph
     with tf.variable_scope(tf.get_variable_scope(), reuse=reuse_variables):
-        f_score, f_geometry = model.model(images, is_training=True)
+        f_score, f_geometry = model.model(images, is_training=True, reuse=reuse_variables)
 
     model_loss = model.loss(score_maps, f_score,
                             geo_maps, f_geometry,
@@ -71,10 +71,12 @@ def main(argv=None):
     os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.gpu_list
     if not tf.gfile.Exists(FLAGS.checkpoint_path):
         tf.gfile.MkDir(FLAGS.checkpoint_path)
-    else:
-        if not FLAGS.restore:
-            tf.gfile.DeleteRecursively(FLAGS.checkpoint_path)
-            tf.gfile.MkDir(FLAGS.checkpoint_path)
+
+    # disable this code to prevent mistakingly deleting folder
+    # else:
+    #     if not FLAGS.restore:
+    #         tf.gfile.DeleteRecursively(FLAGS.checkpoint_path)
+    #         tf.gfile.MkDir(FLAGS.checkpoint_path)
 
     input_images = tf.placeholder(tf.float32, shape=[None, None, None, 3], name='input_images')
     input_score_maps = tf.placeholder(tf.float32, shape=[None, None, None, 1], name='input_score_maps')
@@ -99,7 +101,7 @@ def main(argv=None):
     input_training_masks_split = tf.split(input_training_masks, len(gpus))
 
     tower_grads = []
-    reuse_variables = None
+    reuse_variables = False
     for i, gpu_id in enumerate(gpus):
         with tf.device('/gpu:%d' % gpu_id):
             with tf.name_scope('model_%d' % gpu_id) as scope:
