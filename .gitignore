@@ -106,3 +106,4 @@ ENV/
 # result files for demo
 static/results
 checkpoints/*
+commands
