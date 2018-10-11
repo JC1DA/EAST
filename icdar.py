@@ -701,6 +701,9 @@ def generator(input_size=512, batch_size=32,
                     plt.show()
                     plt.close()
 
+                #add image normalization
+                im = (im - 128) / 256
+
                 images.append(im[:, :, ::-1].astype(np.float32))
                 image_fns.append(im_fn)
                 score_maps.append(score_map[::4, ::4, np.newaxis].astype(np.float32))
