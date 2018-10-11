@@ -185,8 +185,8 @@ def shrink_poly(poly, r):
     :return: the shrinked poly
     '''
     # shrink ratio
-    #R = 0.3
-    R = 1.0
+    R = 0.3
+    #R = 0.75
     # find the longer pair
     if np.linalg.norm(poly[0] - poly[1]) + np.linalg.norm(poly[2] - poly[3]) > \
                     np.linalg.norm(poly[0] - poly[3]) + np.linalg.norm(poly[1] - poly[2]):
@@ -487,6 +487,10 @@ def generate_rbox(im_size, polys, tags):
             cv2.fillPoly(training_mask, poly.astype(np.int32)[np.newaxis, :, :], 0)
         if tag:
             cv2.fillPoly(training_mask, poly.astype(np.int32)[np.newaxis, :, :], 0)
+
+        #fill the shrunk area with 0 to ignore loss
+        cv2.fillPoly(training_mask, poly.astype(np.int32)[np.newaxis, :, :], 0)        
+        cv2.fillPoly(training_mask, shrinked_poly.astype(np.int32)[np.newaxis, :, :], 1)
 
         xy_in_poly = np.argwhere(poly_mask == (poly_idx + 1))
         # if geometry == 'RBOX':
