@@ -185,7 +185,8 @@ def shrink_poly(poly, r):
     :return: the shrinked poly
     '''
     # shrink ratio
-    R = 0.3
+    #R = 0.3
+    R = 1.0
     # find the longer pair
     if np.linalg.norm(poly[0] - poly[1]) + np.linalg.norm(poly[2] - poly[3]) > \
                     np.linalg.norm(poly[0] - poly[3]) + np.linalg.norm(poly[1] - poly[2]):

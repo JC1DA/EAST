@@ -148,8 +148,12 @@ def main(argv=None):
                                          input_size=FLAGS.input_size,
                                          batch_size=FLAGS.batch_size_per_gpu * len(gpus))
 
+        cur_step = 0
+        if FLAGS.restore:
+            cur_step = int(sess.run([global_step])[0])
+
         start = time.time()
-        for step in range(FLAGS.max_steps):
+        for step in range(cur_step, FLAGS.max_steps):
             data = next(data_generator)
             ml, tl, _ = sess.run([model_loss, total_loss, train_op], feed_dict={input_images: data[0],
                                                                                 input_score_maps: data[2],
