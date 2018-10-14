@@ -489,8 +489,8 @@ def generate_rbox(im_size, polys, tags):
             cv2.fillPoly(training_mask, poly.astype(np.int32)[np.newaxis, :, :], 0)
 
         #fill the shrunk area with 0 to ignore loss
-        cv2.fillPoly(training_mask, poly.astype(np.int32)[np.newaxis, :, :], 0)        
-        cv2.fillPoly(training_mask, shrinked_poly.astype(np.int32)[np.newaxis, :, :], 1)
+        #cv2.fillPoly(training_mask, poly.astype(np.int32)[np.newaxis, :, :], 0)        
+        #cv2.fillPoly(training_mask, shrinked_poly.astype(np.int32)[np.newaxis, :, :], 1)
 
         xy_in_poly = np.argwhere(poly_mask == (poly_idx + 1))
         # if geometry == 'RBOX':
@@ -704,9 +704,6 @@ def generator(input_size=512, batch_size=32,
                     plt.tight_layout()
                     plt.show()
                     plt.close()
-
-                #add image normalization
-                im = (im - 128) / 256
 
                 images.append(im[:, :, ::-1].astype(np.float32))
                 image_fns.append(im_fn)
